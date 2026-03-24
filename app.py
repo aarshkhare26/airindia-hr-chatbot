@@ -1,45 +1,56 @@
 import streamlit as st
 
-st.set_page_config(page_title="Air India HR AI", layout="wide")
+st.set_page_config(layout="wide")
 
 # -------------------------------
-# THEME (PREMIUM UI)
+# 🎨 PREMIUM UI CSS
 # -------------------------------
 st.markdown("""
 <style>
+
 body {
-    background-color: #f8f9fa;
+    background-color: #f5f6fa;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 2px solid #eee;
+/* Main container */
+.block-container {
+    padding-top: 2rem;
 }
 
 /* Header */
-.title {
+.header {
+    font-size: 28px;
+    font-weight: 700;
     color: #d71920;
-    font-size: 32px;
-    font-weight: bold;
 }
 
 /* Chat bubbles */
-.user-bubble {
-    background-color: #d71920;
+.user {
+    background: #d71920;
     color: white;
-    padding: 10px 15px;
-    border-radius: 15px;
-    margin: 5px 0;
-    text-align: right;
+    padding: 10px 14px;
+    border-radius: 15px 15px 5px 15px;
+    margin: 6px 0;
+    width: fit-content;
+    margin-left: auto;
 }
 
-.bot-bubble {
-    background-color: #ffffff;
-    padding: 10px 15px;
-    border-radius: 15px;
+.bot {
+    background: #ffffff;
     border: 1px solid #ddd;
-    margin: 5px 0;
+    padding: 10px 14px;
+    border-radius: 15px 15px 15px 5px;
+    margin: 6px 0;
+    width: fit-content;
+}
+
+/* Cards */
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+    margin-bottom: 12px;
 }
 
 /* Buttons */
@@ -54,37 +65,20 @@ section[data-testid="stSidebar"] {
     background-color: #d71920;
     color: white;
 }
+
+/* Input */
+.stChatInput {
+    position: fixed;
+    bottom: 20px;
+    left: 5%;
+    right: 35%;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------
-# SIDEBAR
-# -------------------------------
-with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/en/4/4f/Air_India_Logo.svg", width=120)
-
-    st.markdown("## ✈️ Air India HR AI")
-
-    if st.button("➕ New Chat"):
-        st.session_state.messages = []
-        st.session_state.mode = None
-        st.session_state.step = None
-        st.rerun()
-
-    st.markdown("---")
-    st.write("👤 Logged in as: Aarsh")
-    st.write("Role: Pilot")
-
-# -------------------------------
-# HEADER
-# -------------------------------
-st.markdown("<div class='title'>✈️ Air India HR AI Assistant</div>", unsafe_allow_html=True)
-st.write("HRM Group 1")
-
-st.divider()
-
-# -------------------------------
-# STATE INIT
+# 🧠 SESSION STATE
 # -------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -96,66 +90,100 @@ if "step" not in st.session_state:
     st.session_state.step = None
 
 # -------------------------------
-# START SCREEN
+# 🔁 NEW CHAT
 # -------------------------------
-if st.session_state.mode is None:
+def reset_chat():
+    st.session_state.messages = []
+    st.session_state.mode = None
+    st.session_state.step = None
 
-    st.write("### 👇 Choose a service")
+# -------------------------------
+# HEADER
+# -------------------------------
+st.markdown("<div class='header'>✈️ Air India HR Assistant</div>", unsafe_allow_html=True)
+st.caption("HRM Group 1 • Internal HR System")
 
-    col1, col2, col3 = st.columns(3)
+st.divider()
 
-    if col1.button("📘 HR Query"):
-        st.session_state.mode = "hr"
+# -------------------------------
+# LAYOUT (LEFT CHAT / RIGHT PANEL)
+# -------------------------------
+left, right = st.columns([2,1])
+
+# ===============================
+# 💬 LEFT SIDE (CHAT)
+# ===============================
+with left:
+
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            st.markdown(f"<div class='user'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='bot'>🤖 {msg['content']}</div>", unsafe_allow_html=True)
+
+    user_input = st.chat_input("Type your message...")
+
+# ===============================
+# 📋 RIGHT SIDE (HR PANEL)
+# ===============================
+with right:
+
+    st.markdown("### 👤 Aarsh Khare")
+    st.caption("Pilot")
+
+    if st.button("➕ New Chat"):
+        reset_chat()
         st.rerun()
 
-    if col2.button("✈️ Apply Leave"):
+    st.markdown("---")
+
+    st.markdown("### HR Services")
+
+    if st.button("📘 HR Policy Info"):
+        st.session_state.mode = "hr"
+        st.session_state.messages.append({"role":"bot","content":"Ask me anything about HR policies"})
+        st.rerun()
+
+    if st.button("✈️ Apply Leave"):
         st.session_state.mode = "leave"
         st.session_state.step = "name"
-        st.session_state.messages.append({"role": "bot", "content": "Enter your name"})
+        st.session_state.messages.append({"role":"bot","content":"Enter your name"})
         st.rerun()
 
-    if col3.button("⚠️ Complaint"):
+    if st.button("⚠️ Raise Complaint"):
         st.session_state.mode = "complaint"
-        st.session_state.messages.append({"role": "bot", "content": "Describe your issue"})
+        st.session_state.messages.append({"role":"bot","content":"Describe your issue"})
         st.rerun()
 
-    st.stop()
+    st.markdown("---")
+
+    st.markdown("### Quick Info")
+
+    st.markdown("<div class='card'>📅 Leave Balance: 24 days</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>⏱ Max Work Hours: 40/week</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>⚠️ Fatigue Threshold: 85%</div>", unsafe_allow_html=True)
 
 # -------------------------------
-# DISPLAY CHAT
-# -------------------------------
-for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"<div class='user-bubble'>👤 {msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='bot-bubble'>🤖 {msg['content']}</div>", unsafe_allow_html=True)
-
-# -------------------------------
-# INPUT
-# -------------------------------
-user_input = st.chat_input("Type your message...")
-
-# -------------------------------
-# LOGIC
+# 🤖 LOGIC
 # -------------------------------
 def hr_response(q):
     q = q.lower()
     if "leave" in q:
-        return "24 paid leaves, 12 sick leaves, emergency allowed."
-    elif "hours" in q:
-        return "Max 40 hrs/week, 12 hr rest mandatory."
-    elif "fatigue" in q:
+        return "Employees get 24 paid leaves, 12 sick leaves."
+    if "hours" in q:
+        return "Max 40 hours/week with mandatory rest."
+    if "fatigue" in q:
         return "85% warning, 90% critical."
-    return "Ask about leave, hours, fatigue, or hiring."
+    return "Ask about leave, hours, fatigue, or policies."
 
-def leave_flow(user_input):
+def leave_flow(inp):
     if st.session_state.step == "name":
-        st.session_state.name = user_input
+        st.session_state.name = inp
         st.session_state.step = "date"
         return "Enter leave date"
 
     elif st.session_state.step == "date":
-        st.session_state.date = user_input
+        st.session_state.date = inp
         st.session_state.step = "reason"
         return "Enter reason"
 
@@ -163,15 +191,15 @@ def leave_flow(user_input):
         st.session_state.step = None
         return f"✅ Leave submitted for {st.session_state.name} on {st.session_state.date}"
 
-def complaint_flow(user_input):
-    return "✅ Complaint submitted. HR will review."
+def complaint_flow(inp):
+    return "✅ Complaint submitted to HR"
 
 # -------------------------------
 # HANDLE INPUT
 # -------------------------------
 if user_input:
 
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.messages.append({"role":"user","content":user_input})
 
     if st.session_state.mode == "hr":
         response = hr_response(user_input)
@@ -182,6 +210,9 @@ if user_input:
     elif st.session_state.mode == "complaint":
         response = complaint_flow(user_input)
 
-    st.session_state.messages.append({"role": "bot", "content": response})
+    else:
+        response = "Please select a service from the right panel."
+
+    st.session_state.messages.append({"role":"bot","content":response})
 
     st.rerun()
