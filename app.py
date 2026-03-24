@@ -3,45 +3,87 @@ import streamlit as st
 st.set_page_config(page_title="Air India HR AI", layout="wide")
 
 # -------------------------------
-# HR POLICIES
+# CUSTOM CSS (THEME)
 # -------------------------------
-HR_POLICIES = {
-    "leave policy": """
-Employees are entitled to:
-• 24 paid leaves annually
-• 12 sick leaves
-• Emergency leave with approval
-""",
-
-    "working hours": """
-• Max 40 hours/week
-• 12-hour rest mandatory
-• Weekly off compulsory
-""",
-
-    "fatigue policy": """
-• 85% = warning
-• 90% = HR intervention
-• 100% = not allowed
-""",
-
-    "promotion policy": """
-• Rating > 4.5
-• Low delays
-• High consistency
-"""
+st.markdown("""
+<style>
+body {
+    background-color: #ffffff;
 }
+.main {
+    background-color: #ffffff;
+}
+h1 {
+    color: #d71920;
+}
+.chat-user {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+.chat-bot {
+    background-color: #ffe6e6;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------------
+# SIDEBAR (CHATGPT STYLE)
+# -------------------------------
+with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/Air_India_Logo.svg/1200px-Air_India_Logo.svg.png", width=120)
+    st.title("Air India HR AI")
+
+    if st.button("➕ New Chat"):
+        st.session_state.messages = []
+        st.session_state.leave_flow = None
+        st.rerun()
+
+    st.markdown("---")
+    st.write("### Chat History")
+    st.write("• HR Query")
+    st.write("• Leave Request")
+    st.write("• Complaint")
 
 # -------------------------------
 # HEADER
 # -------------------------------
-st.markdown(
-    """
-    <h1 style='color:#d71920;'>✈️ Air India HR AI Assistant</h1>
-    <h4>HRM Group 1</h4>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<h1>✈️ Air India HR AI Assistant</h1>
+<h4>HRM Group 1</h4>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# -------------------------------
+# INITIAL OPTIONS (BUTTONS)
+# -------------------------------
+if "started" not in st.session_state:
+    st.session_state.started = False
+
+if not st.session_state.started:
+    st.write("### 👇 Choose a service")
+
+    col1, col2, col3 = st.columns(3)
+
+    if col1.button("📘 General HR Query"):
+        st.session_state.started = True
+        st.session_state.mode = "hr"
+
+    if col2.button("✈️ Apply Leave"):
+        st.session_state.started = True
+        st.session_state.mode = "leave"
+        st.session_state.leave_flow = "name"
+
+    if col3.button("⚠️ Raise Complaint"):
+        st.session_state.started = True
+        st.session_state.mode = "complaint"
+
+    st.stop()
 
 # -------------------------------
 # SESSION STATE
@@ -53,16 +95,27 @@ if "leave_flow" not in st.session_state:
     st.session_state.leave_flow = None
 
 # -------------------------------
+# HR POLICIES
+# -------------------------------
+HR_POLICIES = {
+    "leave": "24 paid leaves, 12 sick leaves, emergency leave allowed.",
+    "hours": "Max 40 hours/week, mandatory 12-hour rest.",
+    "fatigue": "85% warning, 90% critical, 100% not allowed."
+}
+
+# -------------------------------
 # DISPLAY CHAT
 # -------------------------------
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if msg["role"] == "user":
+        st.markdown(f"<div class='chat-user'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='chat-bot'>🤖 {msg['content']}</div>", unsafe_allow_html=True)
 
 # -------------------------------
 # INPUT
 # -------------------------------
-user_input = st.chat_input("Ask HR questions...")
+user_input = st.chat_input("Type your message...")
 
 # -------------------------------
 # RESPONSE LOGIC
@@ -70,27 +123,19 @@ user_input = st.chat_input("Ask HR questions...")
 def generate_response(query):
     query = query.lower()
 
-    if "leave policy" in query:
-        return HR_POLICIES["leave policy"]
+    if "leave" in query:
+        return HR_POLICIES["leave"]
 
-    elif "working hours" in query:
-        return HR_POLICIES["working hours"]
+    elif "hours" in query:
+        return HR_POLICIES["hours"]
 
     elif "fatigue" in query:
-        return HR_POLICIES["fatigue policy"]
-
-    elif "promotion" in query:
-        return HR_POLICIES["promotion policy"]
+        return HR_POLICIES["fatigue"]
 
     elif "hire" in query:
-        return "Based on projections, hiring 3–5 pilots is recommended."
+        return "Recommended hiring: 3–5 pilots based on demand."
 
-    elif "leave" in query:
-        st.session_state.leave_flow = "name"
-        return "Enter your name"
-
-    else:
-        return "I can help with HR policies, leave requests, and workforce insights."
+    return "I can help with HR policies, leave requests, and workforce insights."
 
 # -------------------------------
 # LEAVE FLOW
@@ -98,20 +143,16 @@ def generate_response(query):
 def handle_leave(user_input):
     if st.session_state.leave_flow == "name":
         st.session_state.name = user_input
-        st.session_state.leave_flow = "dates"
-        return "Enter leave dates"
+        st.session_state.leave_flow = "date"
+        return "Enter leave date"
 
-    elif st.session_state.leave_flow == "dates":
-        st.session_state.dates = user_input
-        st.session_state.leave_flow = "reason"
-        return "Enter reason"
-
-    elif st.session_state.leave_flow == "reason":
+    elif st.session_state.leave_flow == "date":
+        st.session_state.date = user_input
         st.session_state.leave_flow = None
-        return f"✅ Leave applied for {st.session_state.name} ({st.session_state.dates})"
+        return f"✅ Leave applied for {st.session_state.name} on {st.session_state.date}"
 
 # -------------------------------
-# HANDLE CHAT
+# HANDLE INPUT
 # -------------------------------
 if user_input:
 
@@ -124,5 +165,4 @@ if user_input:
 
     st.session_state.messages.append({"role": "assistant", "content": response})
 
-    with st.chat_message("assistant"):
-        st.write(response)
+    st.rerun()
